@@ -66,6 +66,12 @@ Use "HEADLESS=True pip install ." to build in headless mode with pip""",
         help="""Build with VHACD convex hull decomposition and voxelization engine.""",
     )
     parser.add_argument(
+        "--audio",
+        dest="with_audio",
+        action="store_true",
+        help="""Build with Habitat Acoustics for audio sensors.""",
+    )
+    parser.add_argument(
         "--cmake",
         "--force-cmake",
         dest="force_cmake",
@@ -313,9 +319,16 @@ class CMakeBuild(build_ext):
             "-DBUILD_WITH_VHACD={}".format("ON" if args.with_vhacd else "OFF")
         ]
         cmake_args += [
+            "-DBUILD_WITH_AUDIO={}".format("ON" if args.with_audio else "ON")
+            # todo sangarg : figure out with pip install, how to pass --audio as the argument
+            # currently, audio flag is always set
+        ]
+        cmake_args += [
             "-DBUILD_DATATOOL={}".format("ON" if args.build_datatool else "OFF")
         ]
-        cmake_args += ["-DBUILD_WITH_CUDA={}".format("ON" if args.with_cuda else "OFF")]
+        cmake_args += [
+            "-DBUILD_WITH_CUDA={}".format("ON" if args.with_cuda else "OFF")
+        ]
         cmake_args += [
             "-DBUILD_BASIS_COMPRESSOR={}".format(
                 "ON" if args.build_basis_compressor else "OFF"

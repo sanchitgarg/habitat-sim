@@ -110,6 +110,7 @@ all_base_sensor_types = [
     "color_sensor",
     "depth_sensor",
     "semantic_sensor",
+    "audio_sensor",
 ]
 
 # Sensors that don't have GT NPY files (yet)
@@ -266,6 +267,7 @@ def test_smoke_redwood_noise(scene, gpu2gpu, make_cfg_settings):
     make_cfg_settings["depth_sensor"] = True
     make_cfg_settings["color_sensor"] = False
     make_cfg_settings["semantic_sensor"] = False
+    make_cfg_settings["audio_sensor"] = False
     make_cfg_settings["scene"] = scene
     hsim_cfg = make_cfg(make_cfg_settings)
     hsim_cfg.agents[0].sensor_specifications[0].noise_model = "RedwoodDepthNoiseModel"
@@ -313,6 +315,7 @@ def test_rgba_noise(scene, model_name, make_cfg_settings):
     make_cfg_settings["depth_sensor"] = False
     make_cfg_settings["color_sensor"] = True
     make_cfg_settings["semantic_sensor"] = False
+    make_cfg_settings["audio_sensor"] = False
     make_cfg_settings["scene"] = scene
     hsim_cfg = make_cfg(make_cfg_settings)
     hsim_cfg.agents[0].sensor_specifications[0].noise_model = model_name
@@ -323,3 +326,15 @@ def test_rgba_noise(scene, model_name, make_cfg_settings):
         assert np.linalg.norm(
             obs["color_sensor"].astype(float) - gt.astype(float)
         ) > 1.5e-2 * np.linalg.norm(gt.astype(float)), "Incorrect color_sensor output"
+
+# def test_audio_sensor():
+#     if not osp.exists(scene):
+#         pytest.skip("Skipping {}".format(scene))
+
+#     make_cfg_settings["depth_sensor"] = False
+#     make_cfg_settings["color_sensor"] = False
+#     make_cfg_settings["semantic_sensor"] = False
+#     make_cfg_settings["audio_sensor"] = True
+#     make_cfg_settings["scene"] = scene
+#     hsim_cfg = make_cfg(make_cfg_settings)
+#     hsim_cfg.agents[0].sensor_specifications[0].audio_sensor =

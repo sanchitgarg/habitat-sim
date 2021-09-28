@@ -297,7 +297,8 @@ EMSCRIPTEN_BINDINGS(habitat_sim_bindings_js) {
       .value("GOAL", SensorType::Goal)
       .value("FORCE", SensorType::Force)
       .value("TENSOR", SensorType::Tensor)
-      .value("TEXT", SensorType::Text);
+      .value("TEXT", SensorType::Text)
+      .value("AUDIO", SensorType::Audio);
 
   em::enum_<SensorSubType>("SensorSubType")
       .value("NONE", SensorSubType::None)

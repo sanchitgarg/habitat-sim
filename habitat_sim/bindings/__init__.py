@@ -33,6 +33,8 @@ from habitat_sim._ext.habitat_sim_bindings import (
     SensorSubType,
     SensorType,
     ShortestPath,
+    AudioSensorSpec,
+    AudioSensor,
 )
 from habitat_sim._ext.habitat_sim_bindings import Simulator as SimulatorBackend
 from habitat_sim._ext.habitat_sim_bindings import (

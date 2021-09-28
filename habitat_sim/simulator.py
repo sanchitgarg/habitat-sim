@@ -540,6 +540,9 @@ class Sensor:
 
         self._spec = self._sensor_object.specification()
 
+        if self._spec.sensor_type == SensorType.AUDIO:
+            return
+
         if self._sim.renderer is not None:
             self._sim.renderer.bind_render_target(self._sensor_object)
 
@@ -607,17 +610,27 @@ class Sensor:
         )
 
     def draw_observation(self) -> None:
-        assert self._sim.renderer is not None
-        # see if the sensor is attached to a scene graph, otherwise it is invalid,
-        # and cannot make any observation
-        if not self._sensor_object.object:
-            raise habitat_sim.errors.InvalidAttachedObject(
-                "Sensor observation requested but sensor is invalid.\
-                 (has it been detached from a scene node?)"
-            )
-        self._sim.renderer.draw(self._sensor_object, self._sim)
+        if self._spec.sensor_type is not SensorType.AUDIO:
+            # do nothing in draw observation, get_observation will be called after this
+            # run the simulation there
+            print("simulation.py: In audio draw observations")
+        else:
+            assert self._sim.renderer is not None
+
+            # see if the sensor is attached to a scene graph, otherwise it is invalid,
+            # and cannot make any observation
+            if not self._sensor_object.object:
+                raise habitat_sim.errors.InvalidAttachedObject(
+                    "Sensor observation requested but sensor is invalid.\
+                    (has it been detached from a scene node?)"
+                )
+            self._sim.renderer.draw(self._sensor_object, self._sim)
 
     def _draw_observation_async(self) -> None:
+        if self._spec.sensor_type is not SensorType.AUDIO:
+            print("simulation.py: ------------- In audio draw observations async. ERROR : Should not be called")
+            return
+
         assert self._sim.renderer is not None
         if (
             self._spec.sensor_type == SensorType.SEMANTIC
@@ -673,6 +686,16 @@ class Sensor:
         )
 
     def get_observation(self) -> Union[ndarray, "Tensor"]:
+        if self._spec.sensor_type is not SensorType.AUDIO:
+            audio_sensor = self._agent._sensors["audio_sensor"]
+            # tell the audio sensor about the agent location
+            audio_sensor.setAgentLocation(self._agent.state.position)
+            # run the simulation
+            audio_sensor.runSimulation(self._sim)
+
+            print("simulation.py: ------- In audio get observations")
+            return
+
         assert self._sim.renderer is not None
         tgt = self._sensor_object.render_target
 
@@ -699,6 +722,10 @@ class Sensor:
         return self._noise_model(obs)
 
     def _get_observation_async(self) -> Union[ndarray, "Tensor"]:
+        if self._spec.sensor_type is not SensorType.AUDIO:
+            print("simulation.py: ------- In audio get observations. ERROR : Should not be called")
+            return
+
         if self._spec.gpu2gpu_transfer:
             obs = self._buffer.flip(0)
         else:
