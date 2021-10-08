@@ -610,7 +610,7 @@ class Sensor:
         )
 
     def draw_observation(self) -> None:
-        if self._spec.sensor_type is not SensorType.AUDIO:
+        if self._spec.sensor_type == SensorType.AUDIO:
             # do nothing in draw observation, get_observation will be called after this
             # run the simulation there
             print("simulation.py: In audio draw observations")
@@ -627,7 +627,7 @@ class Sensor:
             self._sim.renderer.draw(self._sensor_object, self._sim)
 
     def _draw_observation_async(self) -> None:
-        if self._spec.sensor_type is not SensorType.AUDIO:
+        if self._spec.sensor_type == SensorType.AUDIO:
             print("simulation.py: ------------- In audio draw observations async. ERROR : Should not be called")
             return
 
@@ -686,7 +686,7 @@ class Sensor:
         )
 
     def get_observation(self) -> Union[ndarray, "Tensor"]:
-        if self._spec.sensor_type is not SensorType.AUDIO:
+        if self._spec.sensor_type == SensorType.AUDIO:
             audio_sensor = self._agent._sensors["audio_sensor"]
             # tell the audio sensor about the agent location
             audio_sensor.setAgentLocation(self._agent.state.position)
@@ -722,7 +722,7 @@ class Sensor:
         return self._noise_model(obs)
 
     def _get_observation_async(self) -> Union[ndarray, "Tensor"]:
-        if self._spec.sensor_type is not SensorType.AUDIO:
+        if self._spec.sensor_type == SensorType.AUDIO:
             print("simulation.py: ------- In audio get observations. ERROR : Should not be called")
             return
 
