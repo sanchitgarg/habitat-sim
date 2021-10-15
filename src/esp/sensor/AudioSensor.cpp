@@ -3,6 +3,9 @@
 // LICENSE file in the root directory of this source tree.
 
 #include <fstream>
+#include <unordered_set>
+#include <unordered_map>
+#include <sstream>
 
 #include "AudioSensor.h"
 #include "esp/sim/Simulator.h"
@@ -90,6 +93,7 @@ bool AudioSensor::getObservationSpace(ObservationSpace& space) {
 }
 
 bool AudioSensor::drawObservation(sim::Simulator& sim) {
+
   if (!audioSimulator) {
     ESP_ERROR() << "drawObservation : AUDIO SIMULATOR NOT CREATED ";
     return false;
@@ -97,7 +101,184 @@ bool AudioSensor::drawObservation(sim::Simulator& sim) {
 
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ drawObservation";
 
-  sceneMesh = sim.getJoinedMesh(false);
+  if (acousticsConfig.enableMaterials && sim.semanticSceneExists())
+  {
+    ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Loading semantic scene";
+    loadSemanticMesh(sim);
+  }
+  else
+  {
+    // load the normal render mesh without any material info
+    ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Semantic scene does not exist or materials are disabled, will use default material";
+    loadMesh(sim);
+  }
+
+  ESP_DEBUG() << "Adding source at position : " << lastSourcePos;
+  audioSimulator->AddSource(HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)});
+
+  audioSimulator->RunSimulation(getSimulationFolder());
+  return true;
+}
+
+void AudioSensor::loadSemanticMesh(sim::Simulator& sim) {
+
+  objectIds.clear();
+
+  sceneMesh = sim.getJoinedSemanticMesh(objectIds);
+
+  // Debug related stuff
+  {
+    std::shared_ptr<scene::SemanticScene> semanticScene = sim.getSemanticScene();
+
+    const std::vector<std::shared_ptr<scene::SemanticCategory>>& categories = semanticScene->categories();
+    const std::vector<std::shared_ptr<scene::SemanticObject>>& objects = semanticScene->objects();
+
+    ESP_DEBUG() << "LOG --------------- Category size : " << categories.size();
+    ESP_DEBUG() << "LOG --------------- Objects size : " << objects.size();
+    ESP_DEBUG() << "LOG --------------- objectIds size : " << objectIds.size();
+    ESP_DEBUG() << "LOG --------------- sceneMesh vbo size : " << sceneMesh->vbo.size();
+    ESP_DEBUG() << "LOG --------------- sceneMesh ibo size : " << sceneMesh->ibo.size();
+    ESP_DEBUG() << "LOG --------------- sceneMesh cbo size : " << sceneMesh->cbo.size();
+
+    std::unordered_map<int, std::string> uniqCategories;
+    std::unordered_map<std::string, int> catToCatId;
+
+    // Get uniq categories for debugging
+    for (const auto category: categories) {
+      auto itr = uniqCategories.find(category->index());
+      if (itr != uniqCategories.end())
+      {
+        if (itr->second != category->name())
+          ESP_DEBUG() << "ERRROOOORRRR --------------- Incorrect category mapping, incoming mapping <"
+            << category->index() << ", " << category->name() << ">"
+            << "; existing <" << itr->first << ", " << itr->second << ">";
+      }
+      else {
+        uniqCategories.insert({category->index(), category->name()});
+        catToCatId.insert({ category->name(), category->index()});
+        ESP_DEBUG() << "LOG --------------- Category names : " <<  category->index() << ", " << category->name();
+      }
+    }
+
+    std::unordered_set<uint16_t> uniqObjIds;
+    std::unordered_map<std::string, std::unordered_set<uint16_t>> categoryNameToObjecIds;
+    for (auto objIds : objectIds)
+    {
+      if (uniqObjIds.insert(objIds).second)
+      {
+        categoryNameToObjecIds[objects[objIds]->category()->name()].insert(objIds);
+      }
+    }
+    ESP_DEBUG() << "LOG --------------- Uniq ObjectId size : " << uniqObjIds.size();
+
+    for (auto catToObjId: categoryNameToObjecIds)
+    {
+      std::stringstream ss;
+      ss << "LOG -------------------- categoryName to ids : " << catToObjId.first << " -> ";
+      for (auto i : catToObjId.second)
+      {
+        ss << i << ", ";
+      }
+      ESP_DEBUG() << ss.str();
+
+      if (catToCatId.find(catToObjId.first) == catToCatId.end())
+      {
+        ESP_DEBUG() << "ERRRROOOORRRRRR ------------------- found cat name that was not seen earlier : " << catToObjId.first;
+      }
+    }
+  } // Debug related stuff
+
+  HabitatAcoustics::VertexData vertices;
+
+  vertices.vertices = sceneMesh->vbo.data();
+  vertices.byteOffset = 0;
+  vertices.vertexCount = sceneMesh->vbo.size();
+  vertices.vertexStride = 0;
+
+  audioSimulator->LoadMeshVertices(vertices);
+
+  std::unordered_map<std::string, std::vector<uint32_t>> categoryNameToIndices;
+
+  auto& ibo = sceneMesh->ibo;
+  for (std::size_t iboIdx = 0; iboIdx < ibo.size(); iboIdx += 3)
+  {
+    // For each index in the ibo
+    //  get the object id
+    //    get the object using the id
+    //      get the category name from the object
+    std::string cat1 = objects[objectIds[ibo[iboIdx]]]->category()->name();
+    std::string cat2 = objects[objectIds[ibo[iboIdx + 1]]]->category()->name();
+    std::string cat3 = objects[objectIds[ibo[iboIdx + 2]]]->category()->name();
+    std::string catToUse;
+
+    if (cat1 == cat2 && cat1 == cat3)
+    {
+      // If all 3 categories are the same, save the indices to cat1 in the categoryNameToIndices map
+      catToUse = cat1;
+    }
+    else if (cat1 != cat2 && cat1 != cat3)
+    {
+      // If cat1 != 2 and 3
+      // then either all 3 are different, or cat1 is different while 2==3
+      // Either case, use 1
+      // reason : if all 3 are different, we cant determine which one is correct
+      // if this is the odd one out, then the triangle is actually of this category
+      catToUse = cat1;
+    }
+    else if (cat1 == cat2)
+    {
+      // if we reach here, cat 1 == 2 but != 3
+      // use 3
+      catToUse = cat3;
+    }
+    else
+    {
+      // else 1 == 3 but != 2
+      // use 2
+      catToUse = cat2;
+    }
+
+    categoryNameToIndices[catToUse].push_back(ibo[iboIdx]);
+    categoryNameToIndices[catToUse].push_back(ibo[iboIdx + 1]);
+    categoryNameToIndices[catToUse].push_back(ibo[iboIdx + 2]);
+  }
+
+  std::size_t indicesLoaded = 0;
+  std::size_t totalIndicesLoaded = 0;
+
+  for (auto catToIndices : categoryNameToIndices)
+  {
+    HabitatAcoustics::IndexData indices;
+
+    indices.indices = catToIndices.second.data();
+    indices.byteOffset = 0;
+    indices.indexCount = catToIndices.second.size();
+
+    ++indicesLoaded;
+    const bool lastUpdate = (indicesLoaded == categoryNameToIndices.size());
+
+    ESP_DEBUG()
+      << "Vertex count : " << vertices.vertexCount
+      << ", Index count : " << indices.indexCount
+      << ", Material : " << catToIndices.first
+      << ", LastUpdate : " << lastUpdate;
+
+    audioSimulator->LoadMeshIndices(
+      indices,
+      catToIndices.first,
+      lastUpdate);
+
+    totalIndicesLoaded += indices.indexCount;
+  }
+
+  if (totalIndicesLoaded != sceneMesh->ibo.size())
+  {
+    ESP_DEBUG() << "EERRRRRRROOOORRRRRR --------- totalIndicesLoaded != sceneMesh->ibo.size() : (" << totalIndicesLoaded << " != " << sceneMesh->ibo.size() << ")";
+  }
+}
+
+void AudioSensor::loadMesh(sim::Simulator& sim) {
+  sceneMesh = sim.getJoinedMesh(true);
 
   HabitatAcoustics::VertexData vertices;
 
@@ -113,17 +294,11 @@ bool AudioSensor::drawObservation(sim::Simulator& sim) {
   indices.indexCount = sceneMesh->ibo.size();
   ESP_DEBUG() << "Vertex count : " << vertices.vertexCount << ", Index count : " << indices.indexCount;
   audioSimulator->LoadMeshData(vertices, indices);
-
-  ESP_DEBUG() << "Adding source at position : " << lastSourcePos;
-  audioSimulator->AddSource(HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)});
-
-  audioSimulator->RunSimulation(getSimulationFolder());
-  return true;
 }
 
 std::string AudioSensor::getSimulationFolder() {
   if (outputFolderPath.empty())
-    return std::string("/home/sangarg/AudioSimulation" + std::to_string(currentSimCount));
+    return std::string("/home/AudioSimulation" + std::to_string(currentSimCount));
 
   return outputFolderPath + std::to_string(currentSimCount);
 }

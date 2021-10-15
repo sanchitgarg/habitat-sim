@@ -1080,8 +1080,10 @@ void Viewer::addSoundSource() {
 
   esp::sensor::AudioSensor& audioSensor = getAgentAudioSensor();
   HabitatAcoustics::Configuration config;
+  config.dumpWaveFiles = true;
   audioSensor.setAudioSimulationConfigs(config);
   audioSensor.setAudioSourceLocation({new_pos[0], new_pos[1], new_pos[2]});
+  audioSensor.setOutputFolder("/home/sangarg/AudioSimulation");
 }
 
 void Viewer::buildTrajectoryVis() {
@@ -1966,6 +1968,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     case KeyEvent::Key::Y: {
       // Run audio simulation
       runAudioSimulation();
+      break;
     }
 // #endif
     case KeyEvent::Key::P:

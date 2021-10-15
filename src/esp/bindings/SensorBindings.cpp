@@ -309,7 +309,8 @@ void initSensorBindings(py::module& m) {
     .def_readwrite("indirect", &HabitatAcoustics::Configuration::indirect)
     .def_readwrite("diffraction", &HabitatAcoustics::Configuration::diffraction)
     .def_readwrite("transmission", &HabitatAcoustics::Configuration::transmission)
-    .def_readwrite("dumpWaveFiles", &HabitatAcoustics::Configuration::dumpWaveFiles);
+    .def_readwrite("dumpWaveFiles", &HabitatAcoustics::Configuration::dumpWaveFiles)
+    .def_readwrite("enableMaterials", &HabitatAcoustics::Configuration::enableMaterials);
 
   // ==== HabitatAcoustics::ChannelLayout ====
   py::class_<HabitatAcoustics::ChannelLayout>(m, "HabitatAcousticsChannelLayout")

@@ -134,7 +134,7 @@ GenericInstanceMeshData::fromPlySplitByObjectId(
       splitMeshData.emplace_back(std::move(instanceMesh));
     }
     objectIdToObjectData.at(objectId).addVertex(
-        globalIndex, data.cpu_vbo[globalIndex], data.cpu_cbo[globalIndex]);
+        globalIndex, data.cpu_vbo[globalIndex], data.cpu_cbo[globalIndex], objectId);
   }
   return splitMeshData;
 }
@@ -142,6 +142,7 @@ GenericInstanceMeshData::fromPlySplitByObjectId(
 std::unique_ptr<GenericInstanceMeshData> GenericInstanceMeshData::fromPLY(
     Mn::Trade::AbstractImporter& importer,
     const std::string& plyFile) {
+
   Cr::Containers::Optional<InstancePlyData> parseResult =
       parsePly(importer, plyFile);
   if (!parseResult) {
@@ -217,7 +218,8 @@ void GenericInstanceMeshData::updateCollisionMeshData() {
 void GenericInstanceMeshData::PerObjectIdMeshBuilder::addVertex(
     uint32_t vertexId,
     const vec3f& position,
-    const vec3uc& color) {
+    const vec3uc& color,
+    const std::uint16_t objId) {
   // if we haven't seen this vertex, add it to the local vertex/color buffer
   auto result = vertexIdToVertexIndex_.emplace(vertexId, data_.cpu_vbo_.size());
   if (result.second) {

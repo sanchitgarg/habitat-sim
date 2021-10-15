@@ -54,9 +54,13 @@ protected:
       std::dynamic_pointer_cast<AudioSensorSpec>(spec_);
   std::unique_ptr<HabitatAcoustics::Simulator> audioSimulator;
   esp::assets::MeshData::ptr sceneMesh;
+  std::vector<uint16_t> objectIds;
 
 private:
   void createAudioSimulator();
+  void loadSemanticMesh(sim::Simulator& sim);
+  void loadMesh(sim::Simulator& sim);
+
   int currentSimCount = -1;
   std::string getSimulationFolder();
   vec3f lastSourcePos;

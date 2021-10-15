@@ -679,86 +679,17 @@ assets::MeshData::ptr Simulator::getJoinedMesh(const bool includeStaticObjects) 
         stageInitAttrs->getRenderAssetHandle());
   }
 
-  // resourceManager_->outputMeshMetaDataToObj(stageInitAttrs->getRenderAssetHandle(), "mesh2.obj", "/home/sangarg/AudioSimulation/");
-  // // add STATIC collision objects
-  // if (includeStaticObjects) {
-  //   // update nodes so SceneNode transforms are up-to-date
-  //   if (renderer_)
-  //     renderer_->waitSceneGraph();
+  return joinedMesh;
+}
 
-  //   physicsManager_->updateNodes();
-
-  //   // collect mesh components from all objects and then merge them.
-  //   // Each mesh component could be duplicated multiple times w/ different
-  //   // transforms.
-  //   std::map<std::string,
-  //            std::vector<Eigen::Transform<float, 3, Eigen::Affine>>>
-  //       meshComponentStates;
-
-  //   // collect RigidObject mesh components
-  //   for (auto objectID : physicsManager_->getExistingObjectIDs()) {
-  //     auto objWrapper = queryRigidObjWrapper(activeSceneID_, objectID);
-  //     if (objWrapper->getMotionType() == physics::MotionType::STATIC) {
-  //       auto objectTransform = Magnum::EigenIntegration::cast<
-  //           Eigen::Transform<float, 3, Eigen::Affine>>(
-  //           physicsManager_->getObjectVisualSceneNode(objectID)
-  //               .absoluteTransformationMatrix());
-  //       const metadata::attributes::ObjectAttributes::cptr
-  //           initializationTemplate = objWrapper->getInitializationAttributes();
-  //       objectTransform.scale(Magnum::EigenIntegration::cast<vec3f>(
-  //           initializationTemplate->getScale()));
-  //       std::string meshHandle =
-  //           initializationTemplate->getCollisionAssetHandle();
-  //       if (meshHandle.empty()) {
-  //         meshHandle = initializationTemplate->getRenderAssetHandle();
-  //       }
-  //       meshComponentStates[meshHandle].push_back(objectTransform);
-  //     }
-  //   }
-
-  //   // collect ArticulatedObject mesh components
-  //   for (auto& objectID : physicsManager_->getExistingArticulatedObjectIds()) {
-  //     auto articulatedObject =
-  //         getArticulatedObjectManager()->getObjectByID(objectID);
-  //     if (articulatedObject->getMotionType() == physics::MotionType::STATIC) {
-  //       for (int linkIx = -1; linkIx < articulatedObject->getNumLinks();
-  //            ++linkIx) {
-  //         //-1 is baseLink_
-  //         std::vector<std::pair<esp::scene::SceneNode*, std::string>>
-  //             visualAttachments =
-  //                 physicsManager_->getArticulatedObject(objectID)
-  //                     .getLink(linkIx)
-  //                     .visualAttachments_;
-  //         for (auto& visualAttachment : visualAttachments) {
-  //           auto objectTransform = Magnum::EigenIntegration::cast<
-  //               Eigen::Transform<float, 3, Eigen::Affine>>(
-  //               visualAttachment.first->absoluteTransformationMatrix());
-  //           std::string meshHandle = visualAttachment.second;
-  //           meshComponentStates[meshHandle].push_back(objectTransform);
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   // merge mesh components into the final mesh
-  //   for (auto& meshComponent : meshComponentStates) {
-  //     assets::MeshData::uptr joinedObjectMesh =
-  //         resourceManager_->createJoinedCollisionMesh(meshComponent.first);
-  //     for (auto& meshTransform : meshComponent.second) {
-  //       int prevNumIndices = joinedMesh->ibo.size();
-  //       int prevNumVerts = joinedMesh->vbo.size();
-  //       joinedMesh->ibo.resize(prevNumIndices + joinedObjectMesh->ibo.size());
-  //       for (size_t ix = 0; ix < joinedObjectMesh->ibo.size(); ++ix) {
-  //         joinedMesh->ibo[ix + prevNumIndices] =
-  //             joinedObjectMesh->ibo[ix] + prevNumVerts;
-  //       }
-  //       joinedMesh->vbo.reserve(joinedObjectMesh->vbo.size() + prevNumVerts);
-  //       for (auto& vert : joinedObjectMesh->vbo) {
-  //         joinedMesh->vbo.push_back(meshTransform * vert);
-  //       }
-  //     }
-  //   }
-  // }
+assets::MeshData::ptr Simulator::getJoinedSemanticMesh(std::vector<uint16_t>& objectIds) {
+  assets::MeshData::ptr joinedMesh = assets::MeshData::create();
+  auto stageInitAttrs = physicsManager_->getStageInitAttributes();
+  if (stageInitAttrs != nullptr) {
+    joinedMesh = resourceManager_->createJoinedSemanticCollisionMesh(
+        objectIds,
+        stageInitAttrs->getSemanticAssetHandle());
+  }
 
   return joinedMesh;
 }

@@ -25,6 +25,7 @@
 #include "esp/scene/SceneManager.h"
 #include "esp/scene/SceneNode.h"
 #include "esp/sensor/Sensor.h"
+#include "esp/scene/SemanticScene.h"
 
 #include "SimulatorConfiguration.h"
 
@@ -945,7 +946,7 @@ class Simulator {
    * @return A shared ptr assets::MeshData with required mesh
    */
   assets::MeshData::ptr getJoinedMesh(bool includeStaticObjects = false);
-  assets::MeshData::ptr getJoinedMesh2();
+  assets::MeshData::ptr getJoinedSemanticMesh(std::vector<uint16_t>& objectIds);
 
   /**
    * @brief Set visualization of the current NavMesh @ref pathfinder_ on or off.
