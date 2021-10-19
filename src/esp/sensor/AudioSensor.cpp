@@ -126,13 +126,13 @@ void AudioSensor::loadSemanticMesh(sim::Simulator& sim) {
 
   sceneMesh = sim.getJoinedSemanticMesh(objectIds);
 
+  std::shared_ptr<scene::SemanticScene> semanticScene = sim.getSemanticScene();
+
+  const std::vector<std::shared_ptr<scene::SemanticCategory>>& categories = semanticScene->categories();
+  const std::vector<std::shared_ptr<scene::SemanticObject>>& objects = semanticScene->objects();
+
   // Debug related stuff
   {
-    std::shared_ptr<scene::SemanticScene> semanticScene = sim.getSemanticScene();
-
-    const std::vector<std::shared_ptr<scene::SemanticCategory>>& categories = semanticScene->categories();
-    const std::vector<std::shared_ptr<scene::SemanticObject>>& objects = semanticScene->objects();
-
     ESP_DEBUG() << "LOG --------------- Category size : " << categories.size();
     ESP_DEBUG() << "LOG --------------- Objects size : " << objects.size();
     ESP_DEBUG() << "LOG --------------- objectIds size : " << objectIds.size();
