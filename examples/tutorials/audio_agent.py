@@ -47,18 +47,20 @@ def main():
 
     # run the simulation
     obs = sim.get_sensor_observations()
+    obs = sim.get_sensor_observations()
+    obs = sim.get_sensor_observations()
 
-    # get the simulation results
-    channelCount = audio_sensor.getChannelCount()
-    sampleCount = audio_sensor.getSampleCount()
+    # # get the simulation results
+    # channelCount = audio_sensor.getChannelCount()
+    # sampleCount = audio_sensor.getSampleCount()
 
-    for channelIndex in range (0, channelCount):
-        filePath = outputFolderPath + "0/ir" + str(channelIndex) + ".txt"
-        f = open(filePath, "w")
-        print("Writing file : ", filePath)
-        for sampleIndex in range (0, sampleCount):
-            f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
-        f.close()
+    # for channelIndex in range (0, channelCount):
+    #     filePath = outputFolderPath + "0/ir" + str(channelIndex) + ".txt"
+    #     f = open(filePath, "w")
+    #     print("Writing file : ", filePath)
+    #     for sampleIndex in range (0, sampleCount):
+    #         f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
+    #     f.close()
 
     sim.close()
 
