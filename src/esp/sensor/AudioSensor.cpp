@@ -44,9 +44,6 @@ void AudioSensor::createAudioSimulator() {
     return;
   }
 
-  if (audioSimulator)
-    return;
-
   audioSimulator = std::make_unique<HabitatAcoustics::Simulator>();
 
   // Configure audio simulator
