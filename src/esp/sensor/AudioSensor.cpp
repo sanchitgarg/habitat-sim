@@ -36,6 +36,7 @@ AudioSensor::AudioSensor(scene::SceneNode& node, AudioSensorSpec::ptr spec)
 
 void AudioSensor::createAudioSimulator() {
 
+  ++currentSimCount;
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ Create audio simulator";
 
   if (!configsSet)
@@ -44,33 +45,47 @@ void AudioSensor::createAudioSimulator() {
     return;
   }
 
+  // If the audio simulator already exists, do not create a new one
+  if (audioSimulator)
+    return;
+
+  newInitialization = true;
   audioSimulator = std::make_unique<HabitatAcoustics::Simulator>();
+  lastAgentPos = {__FLT_MIN__, __FLT_MIN__, __FLT_MIN__};
 
   // Configure audio simulator
   ESP_DEBUG() << acousticsConfig;
 
   audioSimulator->Configure(acousticsConfig);
-  ++currentSimCount;
 }
 
 void AudioSensor::setAudioSourceLocation(vec3f sourcePos) {
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAudioSourceLocation : " << sourcePos;
   lastSourcePos = sourcePos;
+  newSource = true;
 }
 
 void AudioSensor::setAgentLocation(vec3f agentPos) {
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAgentLocation : " << agentPos;
-  createAudioSimulator();
-  HabitatAcoustics::ChannelLayout channelLayout;
-  channelLayout.channelCount = 2;
-  channelLayout.channelType = 3;
 
-  audioSimulator->AddListener(HabitatAcoustics::Vector3f{agentPos(0), agentPos(1), agentPos(2)}, channelLayout);
+  // Create the audio simulator object if it does not already exist
+  createAudioSimulator();
+
+  // If the agent position has changed, add a listener
+  if (newInitialization || (lastAgentPos != agentPos))
+  {
+    audioSimulator->AddListener(HabitatAcoustics::Vector3f{agentPos(0), agentPos(1), agentPos(2)}, channelLayout);
+  }
 }
 
 void AudioSensor::setAudioSimulationConfigs(const HabitatAcoustics::Configuration& config) {
   acousticsConfig = config;
   configsSet = true;
+}
+
+void AudioSensor::setChannelLayout(const HabitatAcoustics::ChannelLayout& channelLayout)
+{
+  this->channelLayout = channelLayout;
 }
 
 bool AudioSensor::getObservationSpace(ObservationSpace& space) {
@@ -98,22 +113,37 @@ bool AudioSensor::drawObservation(sim::Simulator& sim) {
 
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ drawObservation";
 
-  if (acousticsConfig.enableMaterials && sim.semanticSceneExists())
+  if (newInitialization)
   {
-    ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Loading semantic scene";
-    loadSemanticMesh(sim);
-  }
-  else
-  {
-    // load the normal render mesh without any material info
-    ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Semantic scene does not exist or materials are disabled, will use default material";
-    loadMesh(sim);
+    newInitialization = false;
+    ESP_DEBUG() << "New initialization, will upload geometry and add the source at position : " << lastSourcePos;
+
+    if (acousticsConfig.enableMaterials && sim.semanticSceneExists())
+    {
+      ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Loading semantic scene";
+      loadSemanticMesh(sim);
+    }
+    else
+    {
+      // load the normal render mesh without any material info
+      ESP_DEBUG() << "LOOOOGGGGGGGG ----------------- Semantic scene does not exist or materials are disabled, will use default material";
+      loadMesh(sim);
+    }
   }
 
-  ESP_DEBUG() << "Adding source at position : " << lastSourcePos;
-  audioSimulator->AddSource(HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)});
+  if (newSource)
+  {
+    // If its a new source, add it.
+    // A new initialization should always come with a new source
+    // Mark that the source as added
+    newSource = false;
+    ESP_DEBUG() << "Adding source at position : " << lastSourcePos;
+    audioSimulator->AddSource(HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)});
+  }
 
-  audioSimulator->RunSimulation(getSimulationFolder());
+  const std::string simFolder = getSimulationFolder();
+  ESP_DEBUG() << "Running simulation, folder : " << simFolder;
+  audioSimulator->RunSimulation(simFolder);
   return true;
 }
 
@@ -371,6 +401,11 @@ void AudioSensor::runSimulation(sim::Simulator& sim)
   drawObservation(sim);
 }
 
+void AudioSensor::reset()
+{
+  audioSimulator = nullptr;
+}
+
 bool AudioSensor::getObservation(sim::Simulator& sim, Observation& obs) {
   ESP_DEBUG() << "LOOOOOGGGGG ------------------ getObservation";
   drawObservation(sim);
@@ -402,6 +437,12 @@ std::size_t AudioSensor::getSampleCount()
 
 float AudioSensor::getImpulseResponse(const std::size_t channelIndex, const std::size_t sampleIndex)
 {
+  if (nullptr == audioSimulator)
+  {
+    ESP_ERROR() << "getImpulseResponse : AUDIO SIMULATOR NOT CREATED ";
+    return 0.0f;
+  }
+
   return audioSimulator->GetImpulseResponse(channelIndex, sampleIndex);
 }
 

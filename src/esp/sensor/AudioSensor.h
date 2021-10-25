@@ -34,6 +34,7 @@ class AudioSensor : public Sensor {
   void setAudioSourceLocation(vec3f sourcePos);
   void setAgentLocation(vec3f agentPos);
   void setAudioSimulationConfigs(const HabitatAcoustics::Configuration& config);
+  void setChannelLayout(const HabitatAcoustics::ChannelLayout& channelLayout);
   void setOutputFolder(const char* folderPath);
 
   // todo sangarg : implement this
@@ -48,24 +49,29 @@ class AudioSensor : public Sensor {
   float getImpulseResponse(const std::size_t channelIndex, const std::size_t sampleIndex);
 
   void runSimulation(sim::Simulator& sim);
+  void reset();
 
 protected:
   AudioSensorSpec::ptr audioSensorSpec_ =
       std::dynamic_pointer_cast<AudioSensorSpec>(spec_);
   std::unique_ptr<HabitatAcoustics::Simulator> audioSimulator;
   esp::assets::MeshData::ptr sceneMesh;
-  std::vector<uint16_t> objectIds;
+  std::vector<std::uint16_t> objectIds;
 
 private:
   void createAudioSimulator();
   void loadSemanticMesh(sim::Simulator& sim);
   void loadMesh(sim::Simulator& sim);
+  std::string getSimulationFolder();
 
   int currentSimCount = -1;
-  std::string getSimulationFolder();
   vec3f lastSourcePos;
+  vec3f lastAgentPos;
   HabitatAcoustics::Configuration acousticsConfig;
+  HabitatAcoustics::ChannelLayout channelLayout;
   bool configsSet = false;
+  bool newInitialization = false;
+  bool newSource = false;
   std::string outputFolderPath;
 
 public:

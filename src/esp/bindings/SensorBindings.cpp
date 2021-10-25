@@ -332,11 +332,13 @@ void initSensorBindings(py::module& m) {
       .def("setAudioSourceLocation", &AudioSensor::setAudioSourceLocation)
       .def("setAgentLocation", &AudioSensor::setAgentLocation)
       .def("setAudioSimulationConfigs", &AudioSensor::setAudioSimulationConfigs)
+      .def("setChannelLayout", &AudioSensor::setChannelLayout)
       .def("getChannelCount", &AudioSensor::getChannelCount)
       .def("getSampleCount", &AudioSensor::getSampleCount)
       .def("getImpulseResponse", &AudioSensor::getImpulseResponse)
       .def("setOutputFolder", &AudioSensor::setOutputFolder)
-      .def("runSimulation", &AudioSensor::runSimulation);
+      .def("runSimulation", &AudioSensor::runSimulation)
+      .def("reset", &AudioSensor::reset);
 // #endif
 }
 
