@@ -10,6 +10,8 @@ import habitat_sim._ext.habitat_sim_bindings as hsim_bindings
 import numpy as np
 from numpy import ndarray
 
+from datetime import datetime
+
 # def make_default_settings():
 #     settings = {
 #         "width": 1280,  # Spatial resolution of the observations
@@ -27,6 +29,11 @@ from numpy import ndarray
 #         "enable_physics": True,  # enable dynamics simulation
 #     }
 #     return settings
+
+def printTime():
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
 
 def main():
     backend_cfg = habitat_sim.SimulatorConfiguration()
@@ -71,20 +78,25 @@ def main():
     # run the simulation
     for i in range (3):
         print(i)
+        print("Start Time : ")
+        printTime()
         p = outputFolderPath + str(i) + "/ir";
         obs = sim.get_sensor_observations()
 
-        # get the simulation results
-        channelCount = audio_sensor.getChannelCount()
-        sampleCount = audio_sensor.getSampleCount()
+        # # get the simulation results
+        # channelCount = audio_sensor.getChannelCount()
+        # sampleCount = audio_sensor.getSampleCount()
 
-        for channelIndex in range (0, channelCount):
-            filePath = p + str(channelIndex) + ".txt"
-            f = open(filePath, "w")
-            print("Writing file : ", filePath)
-            for sampleIndex in range (0, sampleCount):
-                f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
-            f.close()
+        # for channelIndex in range (0, channelCount):
+        #     filePath = p + str(channelIndex) + ".txt"
+        #     f = open(filePath, "w")
+        #     print("Writing file : ", filePath)
+        #     for sampleIndex in range (0, sampleCount):
+        #         f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
+        #     f.close()
+
+        print("End Time : ")
+        printTime()
 
     sim.close()
 
