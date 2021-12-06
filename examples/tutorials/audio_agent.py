@@ -9,6 +9,7 @@ import habitat_sim._ext.habitat_sim_bindings as hsim_bindings
 
 import numpy as np
 from numpy import ndarray
+import quaternion as qt
 
 from datetime import datetime
 
@@ -73,7 +74,7 @@ def main():
     audio_sensor.setOutputFolder(outputFolderPath)
 
     # set audio source location, no need to set the agent location, will be set implicitly
-    audio_sensor.setAudioSourceLocation(np.array([3.1035, 1.57245, -4.15972]))
+    audio_sensor.setAudioSourceTransform(np.array([3.1035, 1.57245, -4.15972]), np.array([1.0, 0.0, 0.0, 0.0]))
 
     # run the simulation
     for i in range (3):
@@ -83,17 +84,17 @@ def main():
         p = outputFolderPath + str(i) + "/ir";
         obs = sim.get_sensor_observations()
 
-        # # get the simulation results
-        # channelCount = audio_sensor.getChannelCount()
-        # sampleCount = audio_sensor.getSampleCount()
+        # get the simulation results
+        channelCount = audio_sensor.getChannelCount()
+        sampleCount = audio_sensor.getSampleCount()
 
-        # for channelIndex in range (0, channelCount):
-        #     filePath = p + str(channelIndex) + ".txt"
-        #     f = open(filePath, "w")
-        #     print("Writing file : ", filePath)
-        #     for sampleIndex in range (0, sampleCount):
-        #         f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
-        #     f.close()
+        for channelIndex in range (0, channelCount):
+            filePath = p + str(channelIndex) + ".txt"
+            f = open(filePath, "w")
+            print("Writing file : ", filePath)
+            for sampleIndex in range (0, sampleCount):
+                f.write(str(sampleIndex) + "\t" + str(audio_sensor.getImpulseResponse(channelIndex, sampleIndex)) + "\n")
+            f.close()
 
         print("End Time : ")
         printTime()

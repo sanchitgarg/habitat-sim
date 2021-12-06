@@ -59,22 +59,26 @@ void AudioSensor::createAudioSimulator() {
   audioSimulator->Configure(acousticsConfig);
 }
 
-void AudioSensor::setAudioSourceLocation(vec3f sourcePos) {
-  ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAudioSourceLocation : " << sourcePos;
+void AudioSensor::setAudioSourceTransform(vec3f sourcePos, vec4f sourceRotQuat) {
+  ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAudioSourceTransform : pos[" << sourcePos << "]";//, rotQuat[" << sourceRotQuat << "]";
   lastSourcePos = sourcePos;
+  lastSourceRot = sourceRotQuat;
   newSource = true;
 }
 
-void AudioSensor::setAgentLocation(vec3f agentPos) {
-  ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAgentLocation : " << agentPos;
+void AudioSensor::setAgentTransform(vec3f agentPos, vec4f agentRotQuat) {
+  ESP_DEBUG() << "LOOOOOGGGGG ------------------ setAgentTransform : pos[" << agentPos << "], rotQuat[" << agentRotQuat << "]";
 
   // Create the audio simulator object if it does not already exist
   createAudioSimulator();
 
   // If the agent position has changed, add a listener
-  if (newInitialization || (lastAgentPos != agentPos))
+  if (newInitialization || (lastAgentPos != agentPos) || !(lastAgentRot.isApprox(agentRotQuat)))
   {
-    audioSimulator->AddListener(HabitatAcoustics::Vector3f{agentPos(0), agentPos(1), agentPos(2)}, channelLayout);
+    audioSimulator->AddListener(
+      HabitatAcoustics::Vector3f{agentPos(0), agentPos(1), agentPos(2)},
+      HabitatAcoustics::Quaternion{agentRotQuat(0), agentRotQuat(1), agentRotQuat(2), agentRotQuat(3)},
+      channelLayout);
   }
 }
 
@@ -138,7 +142,9 @@ bool AudioSensor::drawObservation(sim::Simulator& sim) {
     // Mark that the source as added
     newSource = false;
     ESP_DEBUG() << "Adding source at position : " << lastSourcePos;
-    audioSimulator->AddSource(HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)});
+    audioSimulator->AddSource(
+      HabitatAcoustics::Vector3f{lastSourcePos(0), lastSourcePos(1), lastSourcePos(2)},
+      HabitatAcoustics::Quaternion{lastSourceRot(0), lastSourceRot(1), lastSourceRot(2), lastSourceRot(3)});
   }
 
   const std::string simFolder = getSimulationFolder();

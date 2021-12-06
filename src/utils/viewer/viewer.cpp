@@ -1082,7 +1082,9 @@ void Viewer::addSoundSource() {
   HabitatAcoustics::Configuration config;
   config.dumpWaveFiles = true;
   audioSensor.setAudioSimulationConfigs(config);
-  audioSensor.setAudioSourceLocation({new_pos[0], new_pos[1], new_pos[2]});
+  audioSensor.setAudioSourceTransform(
+    {new_pos[0], new_pos[1], new_pos[2]},
+    {1, 0, 0, 0});
   audioSensor.setOutputFolder("/home/sangarg/AudioSimulation");
 }
 
@@ -1225,9 +1227,13 @@ void Viewer::displayVoxelField(int objectID) {
 void Viewer::runAudioSimulation() {
   Mn::Matrix4 T = agentBodyNode_->MagnumObject::transformationMatrix();
   Mn::Vector3 pos = T.transformPoint({0.0f, 0.0f, 0.0f});
+  auto rotScalar = agentBodyNode_->rotation().scalar();
+  auto rotVec = agentBodyNode_->rotation().vector();
 
   esp::sensor::AudioSensor& audioSensor = getAgentAudioSensor();
-  audioSensor.setAgentLocation({pos[0], pos[1], pos[2]});
+  audioSensor.setAgentTransform(
+    {pos[0], pos[1], pos[2]},
+    {rotScalar, rotVec[0], rotVec[1], rotVec[2]});
   esp::sensor::Observation obs;
   audioSensor.getObservation(*simulator_, obs);
 }

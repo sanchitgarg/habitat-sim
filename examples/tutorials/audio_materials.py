@@ -71,7 +71,7 @@ def testSemanticScene():
 
     # # set audio source location, no need to set the agent location, will be set implicitly
     # audio_sensor.setAudioSourceLocation(np.array([-0.628058, 1.68568, 14.3147]))
-    audio_sensor.setAudioSourceLocation(np.array([3.1035, 1.57245, -4.15972]))
+    audio_sensor.setAudioSourceTransform(np.array([3.1035, 1.57245, -4.15972]), np.array([1, 0, 0, 0]))
 
     # run the simulation
     obs = sim.get_sensor_observations()

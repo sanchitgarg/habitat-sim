@@ -31,8 +31,8 @@ class AudioSensor : public Sensor {
    */
   bool isVisualSensor() const override { return false; }
 
-  void setAudioSourceLocation(vec3f sourcePos);
-  void setAgentLocation(vec3f agentPos);
+  void setAudioSourceTransform(vec3f sourcePos, vec4f sourceRotQuat);
+  void setAgentTransform(vec3f agentPos, vec4f agentRotQuat);
   void setAudioSimulationConfigs(const HabitatAcoustics::Configuration& config);
   void setChannelLayout(const HabitatAcoustics::ChannelLayout& channelLayout);
   void setOutputFolder(const char* folderPath);
@@ -66,7 +66,9 @@ private:
 
   int currentSimCount = -1;
   vec3f lastSourcePos;
+  vec4f lastSourceRot;
   vec3f lastAgentPos;
+  vec4f lastAgentRot;
   HabitatAcoustics::Configuration acousticsConfig;
   HabitatAcoustics::ChannelLayout channelLayout;
   bool configsSet = false;

@@ -689,7 +689,8 @@ class Sensor:
         if self._spec.sensor_type == SensorType.AUDIO:
             audio_sensor = self._agent._sensors["audio_sensor"]
             # tell the audio sensor about the agent location
-            audio_sensor.setAgentLocation(self._agent.state.position)
+            rot = self._agent.state.rotation
+            audio_sensor.setAgentTransform(self._agent.state.position, np.array([rot.w, rot.x, rot.y, rot.z]))
             # run the simulation
             audio_sensor.runSimulation(self._sim)
 

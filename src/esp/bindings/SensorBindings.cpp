@@ -329,8 +329,8 @@ void initSensorBindings(py::module& m) {
       m, "AudioSensor")
       .def(py::init_alias<std::reference_wrapper<scene::SceneNode>,
                           const AudioSensorSpec::ptr&>())
-      .def("setAudioSourceLocation", &AudioSensor::setAudioSourceLocation)
-      .def("setAgentLocation", &AudioSensor::setAgentLocation)
+      .def("setAudioSourceTransform", &AudioSensor::setAudioSourceTransform)
+      .def("setAgentTransform", &AudioSensor::setAgentTransform)
       .def("setAudioSimulationConfigs", &AudioSensor::setAudioSimulationConfigs)
       .def("setChannelLayout", &AudioSensor::setChannelLayout)
       .def("getChannelCount", &AudioSensor::getChannelCount)
