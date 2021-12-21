@@ -2383,8 +2383,13 @@ bool ResourceManager::outputMeshMetaDataToObj(
   // write vertex info to file
   int numVertices = 0;
   for (const MeshTransformNode& node : metaData.root.children) {
+    int index = node.meshIDLocal + metaData.meshIndex.first;
+    ESP_DEBUG() << "index=" << index;
+    if (index < 0) {
+      index = 0;
+    }
     CollisionMeshData& meshData =
-        meshes_.at(node.meshIDLocal + metaData.meshIndex.first)
+        meshes_.at(index)
             ->getCollisionMeshData();
     for (auto& pos : meshData.positions) {
       Mn::Utility::formatInto(out, out.size(), "{0} {1} {2} {3}{4}", "v",
@@ -2400,8 +2405,13 @@ bool ResourceManager::outputMeshMetaDataToObj(
   int globalVertexNum = 1;
   int numParts = 1;
   for (const MeshTransformNode& node : metaData.root.children) {
+    int index = node.meshIDLocal + metaData.meshIndex.first;
+    ESP_DEBUG() << "index=" << index;
+    if (index < 0) {
+      index = 0;
+    }
     CollisionMeshData& meshData =
-        meshes_.at(node.meshIDLocal + metaData.meshIndex.first)
+        meshes_.at(index)
             ->getCollisionMeshData();
     Mn::Utility::formatInto(out, out.size(), "{0}{1} {2}", "g part_", numParts,
                             "mesh\n");

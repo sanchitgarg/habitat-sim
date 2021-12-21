@@ -9,6 +9,7 @@
 #include "esp/sensor/CameraSensor.h"
 #include "esp/sensor/Sensor.h"
 #include "esp/sensor/SensorFactory.h"
+#include "esp/sensor/AudioSensor.h"
 
 namespace Cr = Corrade;
 using namespace esp::sensor;

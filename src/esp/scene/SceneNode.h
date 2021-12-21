@@ -36,6 +36,7 @@ enum class SceneNodeType {
   AGENT = 2,
   CAMERA = 3,
   OBJECT = 4,  // objects added via physics api
+  AUDIO = 5
 };
 
 // Enumeration of SceneNodeTags

@@ -941,6 +941,13 @@ class Simulator {
                         bool includeStaticObjects = false);
 
   /**
+   * @brief Get the joined mesh data for all objects in the scene
+   * @return A shared ptr assets::MeshData with required mesh
+   */
+  assets::MeshData::ptr getJoinedMesh(bool includeStaticObjects = false);
+  assets::MeshData::ptr getJoinedMesh2();
+
+  /**
    * @brief Set visualization of the current NavMesh @ref pathfinder_ on or off.
    *
    * @param visualize Whether or not to visualize the navmesh.
@@ -1147,6 +1154,8 @@ class Simulator {
   int getAgentObservationSpaces(
       int agentId,
       std::map<std::string, sensor::ObservationSpace>& spaces);
+
+  std::map<std::string, std::vector<assets::CollisionMeshData>> getCollisionMesh();
 
   nav::PathFinder::ptr getPathFinder() { return pathfinder_; }
   void setPathFinder(nav::PathFinder::ptr pf);

@@ -185,3 +185,8 @@ yarn-debug.log*
 yarn-error.log*
 .npm/
 coverage_js/
+
+# audio lib
+src/deps/audio/*
+imgui.ini
+datasets/*
