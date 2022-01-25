@@ -28,6 +28,7 @@
 #include "BaseMesh.h"
 #include "CollisionMeshData.h"
 #include "GenericMeshData.h"
+#include "GenericInstanceMeshData.h"
 #include "MeshData.h"
 #include "MeshMetaData.h"
 #include "RenderAssetInstanceCreationInfo.h"
@@ -390,6 +391,10 @@ class ResourceManager {
    */
   std::unique_ptr<MeshData> createJoinedCollisionMesh(
       const std::string& filename) const;
+
+  std::unique_ptr<MeshData> createJoinedSemanticCollisionMesh(
+    std::vector<uint16_t>& objectIds,
+    const std::string& filename) const;
 
 #ifdef ESP_BUILD_WITH_VHACD
   /**
@@ -768,6 +773,11 @@ class ResourceManager {
                      const MeshTransformNode& node,
                      const Mn::Matrix4& transformFromParentToWorld) const;
 
+  void joinSemanticHierarchy(MeshData& mesh,
+                            std::vector<uint16_t>& meshObjectIds,
+                            const MeshMetaData& metaData,
+                            const MeshTransformNode& node,
+                            const Mn::Matrix4& transformFromParentToWorld) const;
   /**
    * @brief Load materials from importer into assets, and update metaData for
    * an asset to link materials to that asset.

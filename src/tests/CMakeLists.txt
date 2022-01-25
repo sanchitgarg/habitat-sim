@@ -26,8 +26,8 @@ target_include_directories(MetadataMediatorTest PRIVATE ${CMAKE_CURRENT_BINARY_D
 test(NavTest nav assets)
 target_include_directories(NavTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-test(IOTest io metadata)
-target_include_directories(IOTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+#test(IOTest io metadata)
+#target_include_directories(IOTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 test(Mp3dTest scene)
 target_include_directories(Mp3dTest PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

@@ -48,6 +48,11 @@ option(
   OFF
 )
 option(
+  BUILD_WITH_AUDIO
+  "Build Habitat-Sim with audio"
+  OFF
+)
+option(
   BUILD_WITH_BACKGROUND_RENDERER
   "Build Habitat-Sim with async rendering support.  This will be forced to OFF when building emscripten"
   ON

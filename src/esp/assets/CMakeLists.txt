@@ -85,6 +85,10 @@ if(BUILD_WITH_VHACD)
   target_link_libraries(assets PUBLIC vhacd)
 endif()
 
+## if(BUILD_WITH_AUDIO)
+##   target_link_libraries(assets PUBLIC HabitatAcoustics)
+## endif()
+
 if(BUILD_ASSIMP_SUPPORT)
   target_link_libraries(
     assets PUBLIC MagnumPlugins::AssimpImporter PRIVATE Assimp::Assimp

@@ -61,6 +61,10 @@
 #include "esp/sensor/FisheyeSensor.h"
 #include "esp/sim/Simulator.h"
 
+// #ifdef ESP_BUILD_WITH_AUDIO // todo sangarg
+#include "esp/sensor/AudioSensor.h"
+// #endif
+
 #include "ObjectPickingHelper.h"
 
 constexpr float moveSensitivity = 0.07f;
@@ -219,6 +223,10 @@ class Viewer : public Mn::Platform::Application {
   void removeLastObject();
   void invertGravity();
 
+// todo sangarg: add #ifdef
+  void addSoundSource();
+  void runAudioSimulation();
+
 #ifdef ESP_BUILD_WITH_VHACD
   void displayStageDistanceGradientField();
 
@@ -251,6 +259,12 @@ class Viewer : public Mn::Platform::Application {
     esp::sensor::Sensor& cameraSensor =
         agentBodyNode_->getNodeSensorSuite().get("rgba_camera");
     return static_cast<esp::sensor::CameraSensor&>(cameraSensor);
+  }
+
+  esp::sensor::AudioSensor& getAgentAudioSensor() {
+    esp::sensor::Sensor& audioSensor =
+      agentBodyNode_->getNodeSensorSuite().get("audio");
+    return static_cast<esp::sensor::AudioSensor&>(audioSensor);
   }
 
   std::string helpText = R"(
@@ -300,6 +314,7 @@ Key Commands:
   '3': Toggle flying camera mode (user can apply camera transformation loaded from disk).
   '5': Switch ortho/perspective camera.
   '6': Reset ortho camera zoom/perspective camera FOV.
+  'a': Run audio simulation
   'l': Override the default lighting setup with configured settings in `default_light_override.lighting_config.json`.
   'e': Enable/disable frustum culling.
   'c': Show/hide FPS overlay.
@@ -612,6 +627,22 @@ void addSensors(esp::agent::AgentConfiguration& agentConfig, bool isOrtho) {
   // add the equirectangular semantic sensor
   addEquirectangularSensor("semantic_equirectangular",
                            esp::sensor::SensorType::Semantic);
+
+// #ifdef ESP_BUILD_WITH_AUDIO // todo sangarg : figure out why this flag is not getting set
+  // add audio sensor
+  auto addAudioSensor = [&](const std::string& uuid,
+                            esp::sensor::SensorType sensorType) {
+    agentConfig.sensorSpecifications.emplace_back(
+      esp::sensor::AudioSensorSpec::create());
+    auto spec = static_cast<esp::sensor::AudioSensorSpec*>(
+      agentConfig.sensorSpecifications.back().get());
+    spec->uuid = uuid;
+    spec->sensorType = sensorType;
+  };
+  addAudioSensor("audio",
+                  esp::sensor::SensorType::Audio);
+// #endif
+
 }  // addSensors
 
 Viewer::Viewer(const Arguments& arguments)
@@ -1042,6 +1073,21 @@ int Viewer::addPrimitiveObject() {
   }
 }  // addPrimitiveObject
 
+void Viewer::addSoundSource() {
+  addPrimitiveObject();
+  Mn::Matrix4 T = agentBodyNode_->MagnumObject::transformationMatrix();
+  Mn::Vector3 new_pos = T.transformPoint({0.1f, 1.5f, -2.0f});
+
+  esp::sensor::AudioSensor& audioSensor = getAgentAudioSensor();
+  HabitatAcoustics::Configuration config;
+  config.dumpWaveFiles = true;
+  audioSensor.setAudioSimulationConfigs(config);
+  audioSensor.setAudioSourceTransform(
+    {new_pos[0], new_pos[1], new_pos[2]},
+    {1, 0, 0, 0});
+  audioSensor.setOutputFolder("/home/sangarg/AudioSimulation");
+}
+
 void Viewer::buildTrajectoryVis() {
   if (agentLocs_.size() < 2) {
     ESP_WARNING() << "No recorded trajectory "
@@ -1176,6 +1222,22 @@ void Viewer::displayVoxelField(int objectID) {
   objectDisplayed = objectID;
 }
 #endif
+
+//#ifdef (ESP_BUILD_WITH_AUDIO)
+void Viewer::runAudioSimulation() {
+  Mn::Matrix4 T = agentBodyNode_->MagnumObject::transformationMatrix();
+  Mn::Vector3 pos = T.transformPoint({0.0f, 0.0f, 0.0f});
+  auto rotScalar = agentBodyNode_->rotation().scalar();
+  auto rotVec = agentBodyNode_->rotation().vector();
+
+  esp::sensor::AudioSensor& audioSensor = getAgentAudioSensor();
+  audioSensor.setAgentTransform(
+    {pos[0], pos[1], pos[2]},
+    {rotScalar, rotVec[0], rotVec[1], rotVec[2]});
+  esp::sensor::Observation obs;
+  audioSensor.getObservation(*simulator_, obs);
+}
+//#endif
 
 // generate random direction vectors:
 Mn::Vector3 Viewer::randomDirection() {
@@ -1907,6 +1969,16 @@ void Viewer::keyPressEvent(KeyEvent& event) {
       break;
     case KeyEvent::Key::O:
       addTemplateObject();
+      break;
+      // #ifdef(ESP_BUILD_WITH_AUDIO)
+    case KeyEvent::Key::Y: {
+      // Run audio simulation
+      runAudioSimulation();
+      break;
+    }
+// #endif
+    case KeyEvent::Key::P:
+      addSoundSource();
       break;
     case KeyEvent::Key::Q:
       // query the agent state
